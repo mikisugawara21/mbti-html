@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBTI 4問診断</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e17;
+    --surface: #1a1828;
+    --card: #221f35;
+    --accent: #e8c547;
+    --accent2: #ff6b6b;
+    --text: #fffffe;
+    --muted: #a7a9be;
+    --border: rgba(232,197,71,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* 背景の装飾 */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(232,197,71,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(255,107,107,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  /* スクリーン共通 */
+  .screen {
+    display: none;
+    animation: fadeUp 0.5s ease forwards;
+  }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== スタート画面 ===== */
+  .start-title {
+    font-size: clamp(2.2rem, 8vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .start-title span {
+    color: var(--accent);
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+  }
+  .start-subtitle {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  .axis-list {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .axis-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+  }
+  .axis-item .label {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .axis-item .desc { color: var(--muted); }
+
+  .btn-start {
+    margin-top: 36px;
+    width: 100%;
+    padding: 18px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 14px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(232,197,71,0.3);
+  }
+
+  /* ===== 質問画面 ===== */
+  .progress-bar-wrap {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+  .progress-seg {
+    height: 4px;
+    flex: 1;
+    border-radius: 99px;
+    background: var(--card);
+    transition: background 0.4s;
+  }
+  .progress-seg.done { background: var(--accent); }
+  .progress-seg.current { background: rgba(232,197,71,0.4); }
+
+  .q-num {
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .q-text {
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 32px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .option-btn {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .option-btn:hover {
+    border-color: var(--accent);
+    background: rgba(232,197,71,0.07);
+    transform: translateX(4px);
+  }
+  .option-btn .opt-key {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(232,197,71,0.12);
+    color: var(--accent);
+    font-weight: 900;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ===== 結果画面 ===== */
+  .result-badge {
+    display: inline-block;
+    font-size: clamp(3rem, 12vw, 5rem);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .result-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .result-desc {
+    background: var(--card);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 14px 14px 0;
+    padding: 20px 22px;
+    color: var(--muted);
+    line-height: 1.8;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+  }
+  .result-axes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .result-axis {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+  }
+  .result-axis .axis-letter {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--accent2);
+    line-height: 1;
+  }
+  .result-axis .axis-label {
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .btn-retry {
+    width: 100%;
+    padding: 18px;
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+    border-radius: 14px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .btn-retry:hover {
+    background: rgba(232,197,71,0.1);
+    transform: translateY(-2px);
+  }
+
+  .tag {
+    display: inline-block;
+    background: rgba(255,107,107,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(255,107,107,0.3);
+    border-radius: 99px;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ===== スタート ===== -->
+  <div id="screen-start" class="screen active">
+    <p class="tag">4 QUESTIONS</p>
+    <h1 class="start-title">あなたの<br><span>MBTI</span>は<br>なんですか？</h1>
+    <p class="start-subtitle">4つの質問に答えるだけで、<br>あなたの性格タイプが分かります。</p>
+    <div class="axis-list">
+      <div class="axis-item"><div class="label">E / I</div><div class="desc">外向 ／ 内向</div></div>
+      <div class="axis-item"><div class="label">N / S</div><div class="desc">直感 ／ 感覚</div></div>
+      <div class="axis-item"><div class="label">F / T</div><div class="desc">感情 ／ 思考</div></div>
+      <div class="axis-item"><div class="label">P / J</div><div class="desc">知覚 ／ 判断</div></div>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">診断スタート →</button>
+  </div>
+
+  <!-- ===== 質問 ===== -->
+  <div id="screen-quiz" class="screen">
+    <div class="progress-bar-wrap" id="progress-bar"></div>
+    <div class="q-num" id="q-num">Q1 / 4</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="options" id="options"></div>
+  </div>
+
+  <!-- ===== 結果 ===== -->
+  <div id="screen-result" class="screen">
+    <p class="tag">YOUR RESULT</p>
+    <div class="result-badge" id="result-type"></div>
+    <div class="result-name" id="result-name"></div>
+    <div class="result-desc" id="result-desc"></div>
+    <div class="result-axes" id="result-axes"></div>
+    <button class="btn-retry" onclick="resetQuiz()">もう一度診断する</button>
+  </div>
+
+</div>
+
+<script>
+// =====================
+// データ定義
+// =====================
+const questions = [
+  {
+    text: "休日の過ごし方は？",
+    a: "🎉 友達や家族と出かけてエネルギーをもらう",
+    b: "🏠 家でひとり静かに過ごして充電する",
+    axis: "EI",   // A→E, B→I
+  },
+  {
+    text: "何かを決めるとき、あなたは？",
+    a: "💡 直感やインスピレーションを大切にする",
+    b: "📋 具体的な事実やデータをもとに考える",
+    axis: "NS",   // A→N, B→S
+  },
+  {
+    text: "友人が悩んでいるとき、あなたは？",
+    a: "🤗 まず気持ちに寄り添って共感する",
+    b: "🔍 原因を分析して解決策を一緒に考える",
+    axis: "FT",   // A→F, B→T
+  },
+  {
+    text: "旅行の計画は？",
+    a: "🌊 大まかに決めてあとは現地で自由に楽しむ",
+    b: "📅 スケジュールをしっかり立てておきたい",
+    axis: "PJ",   // A→P, B→J
+  },
+];
+
+// 16タイプの説明
+const results = {
+  ENFP: { name: "広報運動家", desc: "情熱的で創造力があふれる自由な精神の持ち主。人との繋がりを大切にし、常に新しい可能性を探し続けます。" },
+  ENFJ: { name: "主人公", desc: "カリスマ性があり、人を鼓舞するリーダー。他者の成長を心から願い、献身的に支えます。" },
+  ENTP: { name: "討論者", desc: "知的好奇心旺盛で議論を楽しむ革新者。型にはまらない発想で周囲を刺激します。" },
+  ENTJ: { name: "指揮官", desc: "生まれながらのリーダー。論理的で決断力があり、大きな目標に向かって突き進みます。" },
+  INFP: { name: "仲介者", desc: "理想主義的で共感力が高い詩的な魂。自分の価値観に忠実で、世界をより良くしたいと願います。" },
+  INFJ: { name: "提唱者", desc: "洞察力と共感力を持つ稀有な存在。深い信念を持ち、静かにしかし確実に影響を与えます。" },
+  INTP: { name: "論理学者", desc: "独創的な思考を持つ発明家。知識の探求を愛し、あらゆる物事の仕組みを理解しようとします。" },
+  INTJ: { name: "建築家", desc: "高い知性と強い意志を持つ戦略家。長期的なビジョンを描き、効率的に実現していきます。" },
+  ESFP: { name: "エンターテイナー", desc: "自発的でエネルギッシュな楽しませ上手。人生を楽しみ、周りを明るく盛り上げます。" },
+  ESFJ: { name: "領事官", desc: "面倒見が良く社交的なケアギバー。周囲の調和を大切にし、誰もが幸せであることを望みます。" },
+  ESTP: { name: "起業家", desc: "大胆で行動力があり即興が得意なパフォーマー。リスクを恐れず、刺激的な瞬間を楽しみます。" },
+  ESTJ: { name: "幹部", desc: "実直で信頼性の高い組織の柱。伝統と秩序を重んじ、責任感を持って物事を推進します。" },
+  ISFP: { name: "冒険家", desc: "穏やかで感受性豊かな芸術家。自由を愛し、今この瞬間を大切に生きます。" },
+  ISFJ: { name: "擁護者", desc: "献身的で温かい守護者。大切な人や場所を守るため、静かに力を尽くします。" },
+  ISTP: { name: "巨匠", desc: "大胆かつ実践的な実験者。手を動かしながら物事の仕組みを解明するのが得意です。" },
+  ISTJ: { name: "管理者", desc: "実直で信頼できる現実主義者。細部まで丁寧に、約束したことを必ず守ります。" },
+};
+
+// =====================
+// ロジック
+// =====================
+let currentQ = 0;
+let answers = [];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  // アニメーション再実行
+  el.style.animation = 'none';
+  el.offsetHeight; // reflow
+  el.style.animation = '';
+}
+
+function startQuiz() {
+  currentQ = 0;
+  answers = [];
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+
+  // プログレスバー
+  const bar = document.getElementById('progress-bar');
+  bar.innerHTML = questions.map((_, i) => {
+    let cls = 'progress-seg';
+    if (i < currentQ) cls += ' done';
+    else if (i === currentQ) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  document.getElementById('q-num').textContent = `Q${currentQ + 1} / ${questions.length}`;
+  document.getElementById('q-text').textContent = q.text;
+
+  const opts = document.getElementById('options');
+  opts.innerHTML = `
+    <button class="option-btn" onclick="answer('A')">
+      <div class="opt-key">A</div>
+      <span>${q.a}</span>
+    </button>
+    <button class="option-btn" onclick="answer('B')">
+      <div class="opt-key">B</div>
+      <span>${q.b}</span>
+    </button>
+  `;
+}
+
+function answer(choice) {
+  answers.push(choice);
+  currentQ++;
+  if (currentQ < questions.length) {
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  // タイプ組み立て
+  const typeLetters = answers.map((ans, i) => {
+    const axis = questions[i].axis; // e.g. "EI"
+    return ans === 'A' ? axis[0] : axis[1];
+  });
+  const type = typeLetters.join(''); // e.g. "ENFP"
+
+  const res = results[type] || { name: "ユニークタイプ", desc: "非常に珍しい組み合わせです！" };
+
+  document.getElementById('result-type').textContent = type;
+  document.getElementById('result-name').textContent = `「${res.name}」`;
+  document.getElementById('result-desc').textContent = res.desc;
+
+  const axisLabels = {
+    E: "外向型 Extraversion",
+    I: "内向型 Introversion",
+    N: "直感型 iNtuition",
+    S: "感覚型 Sensing",
+    F: "感情型 Feeling",
+    T: "思考型 Thinking",
+    P: "知覚型 Perceiving",
+    J: "判断型 Judging",
+  };
+  document.getElementById('result-axes').innerHTML = typeLetters.map(l => `
+    <div class="result-axis">
+      <div class="axis-letter">${l}</div>
+      <div class="axis-label">${axisLabels[l]}</div>
+    </div>
+  `).join('');
+
+  showScreen('screen-result');
+}
+
+function resetQuiz() {
+  showScreen('screen-start');
+}
+</script>
+</body>
+</html>
